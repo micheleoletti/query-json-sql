@@ -6,7 +6,7 @@ A simple FastAPI service that allows you to query JSON data using SQL. The servi
 
 Currently experimenting with N8N MPC servers, and I didn't really find a way to let an LLM make smart queries to data.
 
-One of the automations that I'm building is tracking my workout sets in the gym, and currently I can't ask "what is my bench press PR", because the MCP tool would just fetch all the records from the Google Sheet and feed that into the LLM context.
+One of the automations that I'm building is tracking my workout sets in the gym, and currently I can't ask `"what is my bench press PR"`, because the MCP tool would just **fetch all the records from the Google Sheet and feed that into the LLM context**.
 
 There I basically need to pray that:
 
@@ -15,7 +15,7 @@ There I basically need to pray that:
 
 This is suboptimal and definitely not scalable.
 
-A simple option would be custom tool like `get_exercise_pr(exercise_name)`, but that would need to think ahead of time all the possible use cases and limit the expressiveness of the LLM.
+A simple option would be custom tool like `get_exercise_pr(exercise_name)`, but that would require me to think ahead of time all the possible use cases and limit the expressiveness of the LLM.
 
 Instead we could provide a way to:
 
