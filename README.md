@@ -2,12 +2,27 @@
 
 A simple FastAPI service that allows you to query JSON data using SQL. The service loads data into an in-memory SQLite database and executes SQL queries against it, returning results as JSON.
 
-## Features
+## Why
 
-- 🚀 **Zero State**: All operations use in-memory SQLite databases per request
-- 🔄 **One-Shot**: No persistent database management required
-- 🎯 **Total Control**: Full control over data structure, schema, and queries
-- 🤖 **LLM-Friendly**: Simple REST API that can be easily integrated with AI workflows
+Currently experimenting with N8N MPC servers, and I didn't really find a way to let an LLM make smart queries to data.
+
+One of the automations that I'm building is tracking my workout sets in the gym, and currently I can't ask "what is my bench press PR", because the MCP tool would just fetch all the records from the Google Sheet and feed that into the LLM context.
+
+There I basically need to pray that:
+
+- the JSON payload does not break the selected model context window
+- the selected model is smart enough to somehow give me the right answer while reasoning over that stringified JSON data
+
+This is suboptimal and definitely not scalable.
+
+A simple option would be custom tool like `get_exercise_pr(exercise_name)`, but that would need to think ahead of time all the possible use cases and limit the expressiveness of the LLM.
+
+Instead we could provide a way to:
+
+- fetch the data that it needs (MCP tool)
+- **write itself an query to manipulate the data**
+
+Considering that LLMs speak SQL quite decently, I thought that this would be quite cheap and fast to test out.
 
 ## Quick Start
 
@@ -15,8 +30,8 @@ A simple FastAPI service that allows you to query JSON data using SQL. The servi
 
 ```bash
 # Clone and start the service
-git clone <your-repo-url>
-cd sqlite-utils-rest
+git clone https://github.com/micheleoletti/c
+cd query-json-sql
 docker-compose up --build
 ```
 
@@ -26,15 +41,19 @@ The service will be available at `http://localhost:8000`
 
 ```bash
 # Build the image
-docker build -t sqlite-utils-rest .
+docker build -t query-json-sql .
 
 # Run the container
-docker run -p 8000:8000 sqlite-utils-rest
+docker run -p 8000:8000 query-json-sql
 ```
 
 ### Local Development
 
 ```bash
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
 
@@ -51,11 +70,23 @@ Once the service is running, visit:
 
 ## Endpoints
 
+### GET `/health`
+
+Health check endpoint for monitoring and load balancers.
+
+**Response:**
+
+```json
+{
+  "status": "healthy"
+}
+```
+
 ### POST `/query`
 
-Execute SQL queries against JSON data.
+Execute SQL queries against JSON data with full input validation.
 
-**Request Body:**
+**Request Body (Pydantic validated):**
 
 ```json
 {
@@ -73,15 +104,10 @@ Execute SQL queries against JSON data.
 [{ "column1": "value1", "column2": "value2" }]
 ```
 
-### GET `/health`
+**Validation:**
 
-Health check endpoint.
-
-**Response:**
-
-```json
-{ "status": "healthy" }
-```
+- `data`: Must be a non-empty list of dictionaries
+- `sql`: Must be a non-empty string
 
 ## Usage Examples
 
@@ -95,7 +121,7 @@ curl -X POST "http://localhost:8000/query" \
          {"timestamp": "2024-01-01", "content": "Ate apple pie"},
          {"timestamp": "2024-01-02", "content": "Ate banana"}
        ],
-       "sql": "SELECT * FROM data WHERE content LIKE '%apple%' ORDER BY timestamp DESC"
+       "sql": "SELECT * FROM data WHERE content LIKE '\''%apple%'\'' ORDER BY timestamp DESC"
      }'
 ```
 
@@ -125,72 +151,6 @@ curl -X POST "http://localhost:8000/query" \
          {"name": "Bob", "age": 25, "city": "San Francisco"},
          {"name": "Charlie", "age": 35, "city": "New York"}
        ],
-       "sql": "SELECT name, age FROM data WHERE city = \"New York\" AND age > 28"
+       "sql": "SELECT name, age FROM data WHERE city = '\''New York'\'' AND age > 28"
      }'
 ```
-
-## Error Handling
-
-The API provides clear error messages for common issues:
-
-- **400 Bad Request**: Invalid SQL syntax, empty data, or missing required fields
-- **500 Internal Server Error**: Unexpected server errors
-
-Example error response:
-
-```json
-{
-  "detail": "SQL execution error: no such column: invalid_column"
-}
-```
-
-## Technical Details
-
-- **Framework**: FastAPI with Pydantic validation
-- **Database**: In-memory SQLite (per request)
-- **Data Processing**: Pandas DataFrames
-- **Table Name**: Data is always loaded into a table called `data`
-- **Port**: 8000 (configurable via environment variables)
-
-## Why This Approach?
-
-✅ **Better than database hacks because:**
-
-- Zero state management - each request is isolated
-- No persistent database setup or maintenance
-- Complete control over data structure and validation
-- Perfect for AI/LLM integration workflows
-- Lightweight and fast for ad-hoc data analysis
-
-## Development
-
-### Project Structure
-
-```
-sqlite-utils-rest/
-├── main.py              # FastAPI application
-├── requirements.txt     # Python dependencies
-├── Dockerfile          # Container configuration
-├── docker-compose.yml  # Docker Compose setup
-├── .gitignore          # Git ignore patterns
-└── README.md           # This file
-```
-
-### Adding Features
-
-The service is designed to be easily extensible. You can:
-
-1. Add new endpoints in `main.py`
-2. Enhance data validation with Pydantic models
-3. Add custom SQL functions or data transformations
-4. Implement authentication/authorization
-5. Add support for multiple table operations
-
-## License
-
-[Add your license here]
-
-## Contributing
-
-[Add contribution guidelines here]
-# query-json-sql
