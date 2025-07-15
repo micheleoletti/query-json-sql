@@ -6,8 +6,8 @@ from typing import List, Dict, Any, Union
 import logging
 
 app = FastAPI(
-    title="SQLite Utils REST API",
-    description="A REST API for querying JSON data using SQL",
+    title="Query JSON by SQL",
+    description="A REST API for querying JSON data using SQL.",
     version="1.0.0",
 )
 
