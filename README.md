@@ -1,4 +1,4 @@
-# SQLite Utils REST API
+# Query JSON by SQL
 
 A simple FastAPI service that allows you to query JSON data using SQL. The service loads data into an in-memory SQLite database and executes SQL queries against it, returning results as JSON.
 
